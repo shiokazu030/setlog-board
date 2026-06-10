@@ -124,9 +124,9 @@ function bindCardActions() {
   });
 
   document.querySelectorAll(".report-btn").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const card = button.closest(".post-card");
-      postsService.report(card.dataset.id);
+      await postsService.report(card.dataset.id);
       card.remove();
       showToast("通報しました。投稿は非表示になります。");
       if (!document.querySelector(".post-card")) {
@@ -136,9 +136,9 @@ function bindCardActions() {
   });
 }
 
-function renderHome() {
-  const posts = postsService.getAll().slice(0, 3);
-  const popular = postsService.getPopularTags(TAGS).slice(0, 8);
+async function renderHome() {
+  const posts = (await postsService.getAll()).slice(0, 3);
+  const popular = (await postsService.getPopularTags(TAGS)).slice(0, 8);
   shell(`
     <section class="hero">
       <p class="eyebrow">setlog ID募集掲示板</p>
@@ -172,9 +172,9 @@ function renderHome() {
   bindCardActions();
 }
 
-function renderBoard() {
+async function renderBoard() {
   const params = new URLSearchParams(location.search);
-  const filterTags = getFilterTags();
+  const filterTags = await getFilterTags();
   shell(`
     <section class="page-head">
       <h1>募集一覧</h1>
@@ -194,12 +194,12 @@ function renderBoard() {
     </section>
   `);
 
-  const renderList = () => {
+  const renderList = async () => {
     const q = document.querySelector("#q").value.trim().toLowerCase();
     const tag = document.querySelector("#tag").value;
     const age = document.querySelector("#age").value;
     const face = document.querySelector("#face").value;
-    const posts = postsService.getAll().filter((post) => {
+    const posts = (await postsService.getAll()).filter((post) => {
       const haystack = [post.nickname, post.setlogId, post.message, ...post.tags].join(" ").toLowerCase();
       return (!q || haystack.includes(q)) && (!tag || post.tags.includes(tag)) && (!age || post.ageGroup === age) && (!face || post.faceOption === face);
     });
@@ -211,9 +211,8 @@ function renderBoard() {
   renderList();
 }
 
-function getFilterTags() {
-  const customTags = postsService
-    .getAll()
+async function getFilterTags() {
+  const customTags = (await postsService.getAll())
     .flatMap((post) => post.tags)
     .filter((tag) => !TAGS.includes(tag));
   return [...new Set([...TAGS, ...customTags])];
@@ -265,13 +264,13 @@ function renderPost() {
   };
 
   form.addEventListener("input", updatePreview);
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = formData(form);
     const errors = validatePost(data);
     document.querySelector("#errors").innerHTML = errors.map((error) => `<p>${error}</p>`).join("");
     if (errors.length) return;
-    postsService.create(data);
+    await postsService.create(data);
     form.reset();
     updatePreview();
     showToast("募集を投稿しました");
@@ -362,7 +361,7 @@ function infoSections(items) {
   return `<section class="info-list">${items.map(([title, body]) => `<article><h2>${title}</h2><p>${body}</p></article>`).join("")}</section>`;
 }
 
-function renderAdmin() {
+async function renderAdmin() {
   const authed = sessionStorage.getItem("setlog-board-admin") === "true";
   if (!authed) {
     shell(`
@@ -385,7 +384,7 @@ function renderAdmin() {
     return;
   }
 
-  const posts = postsService.getAll({ includeExpired: true, includeReported: true });
+  const posts = await postsService.getAll({ includeExpired: true, includeReported: true });
   const reported = posts.filter((post) => post.reported);
   shell(`
     <section class="page-head"><h1>管理画面</h1><p>通報一覧、投稿削除、通報解除を確認できます。</p></section>
@@ -395,16 +394,16 @@ function renderAdmin() {
     </section>
   `);
   document.querySelectorAll(".delete-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      postsService.remove(button.closest(".post-card").dataset.id);
-      renderAdmin();
+    button.addEventListener("click", async () => {
+      await postsService.remove(button.closest(".post-card").dataset.id);
+      await renderAdmin();
       showToast("削除しました");
     });
   });
   document.querySelectorAll(".unreport-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      postsService.unreport(button.closest(".post-card").dataset.id);
-      renderAdmin();
+    button.addEventListener("click", async () => {
+      await postsService.unreport(button.closest(".post-card").dataset.id);
+      await renderAdmin();
       showToast("通報を解除しました");
     });
   });
@@ -420,4 +419,6 @@ const routes = {
   "/admin": renderAdmin
 };
 
-(routes[route] || renderHome)();
+(async () => {
+  await (routes[route] || renderHome)();
+})();

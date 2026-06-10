@@ -1,5 +1,8 @@
+import { SITE } from "../content.js";
+
 const STORAGE_KEY = "setlog-board-posts-v1";
 const LIFETIME_HOURS = 72;
+const API_BASE = "/api/posts";
 
 const read = () => {
   try {
@@ -15,7 +18,7 @@ const write = (posts) => {
 
 const now = () => new Date();
 
-export const postsService = {
+const localPosts = {
   getAll({ includeExpired = false, includeReported = false } = {}) {
     const current = now();
     return read()
@@ -45,22 +48,85 @@ export const postsService = {
   },
 
   report(id) {
-    const posts = read().map((post) => (post.id === id ? { ...post, reported: true } : post));
-    write(posts);
+    write(read().map((post) => (post.id === id ? { ...post, reported: true } : post)));
   },
 
   unreport(id) {
-    const posts = read().map((post) => (post.id === id ? { ...post, reported: false } : post));
-    write(posts);
+    write(read().map((post) => (post.id === id ? { ...post, reported: false } : post)));
   },
 
   remove(id) {
     write(read().filter((post) => post.id !== id));
+  }
+};
+
+const requestJson = async (path, options = {}) => {
+  const response = await fetch(path, {
+    headers: { "content-type": "application/json", ...(options.headers || {}) },
+    ...options
+  });
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+  if (response.status === 204) return null;
+  return response.json();
+};
+
+const adminQuery = () => `adminKey=${encodeURIComponent(SITE.adminPassword)}`;
+
+export const postsService = {
+  async getAll({ includeExpired = false, includeReported = false } = {}) {
+    const params = new URLSearchParams();
+    if (includeExpired) params.set("includeExpired", "1");
+    if (includeReported) params.set("includeReported", "1");
+    if (includeExpired || includeReported) params.set("adminKey", SITE.adminPassword);
+
+    try {
+      const data = await requestJson(`${API_BASE}${params.toString() ? `?${params}` : ""}`);
+      return data.posts;
+    } catch {
+      return localPosts.getAll({ includeExpired, includeReported });
+    }
   },
 
-  getPopularTags(tags) {
+  async create(input) {
+    try {
+      const data = await requestJson(API_BASE, {
+        method: "POST",
+        body: JSON.stringify(input)
+      });
+      return data.post;
+    } catch {
+      return localPosts.create(input);
+    }
+  },
+
+  async report(id) {
+    try {
+      await requestJson(`${API_BASE}/${encodeURIComponent(id)}/report`, { method: "POST" });
+    } catch {
+      localPosts.report(id);
+    }
+  },
+
+  async unreport(id) {
+    try {
+      await requestJson(`${API_BASE}/${encodeURIComponent(id)}/unreport?${adminQuery()}`, { method: "POST" });
+    } catch {
+      localPosts.unreport(id);
+    }
+  },
+
+  async remove(id) {
+    try {
+      await requestJson(`${API_BASE}/${encodeURIComponent(id)}?${adminQuery()}`, { method: "DELETE" });
+    } catch {
+      localPosts.remove(id);
+    }
+  },
+
+  async getPopularTags(tags) {
     const counts = new Map(tags.map((tag) => [tag, 0]));
-    this.getAll().forEach((post) => {
+    const posts = await this.getAll();
+    posts.forEach((post) => {
       post.tags.forEach((tag) => counts.set(tag, (counts.get(tag) || 0) + 1));
     });
 

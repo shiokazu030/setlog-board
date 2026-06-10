@@ -57,6 +57,22 @@ Netlify Dropの一時サイトとして公開している場合、Netlify上で�
 
 独自ドメインや別のNetlify URLに変更した場合は、各HTML、`sitemap.xml`、`robots.txt` 内の `https://setlog-board.pages.dev` を実際のURLに置き換えてください。
 
+## Cloudflare D1設定
+
+GitHub連携したCloudflare Pagesで全ユーザー共通の投稿DBにする場合:
+
+1. Cloudflare Dashboardで D1 database を作成
+2. `schema.sql` のSQLをD1 Consoleで実行
+3. Pages project `setlog-board` の Settings > Bindings を開く
+4. D1 database bindingを追加
+5. Variable nameを `DB` にする
+6. 作成したD1 databaseを選ぶ
+7. Environment variablesに `ADMIN_KEY` を追加
+8. 値は管理画面用の秘密文字列にする
+9. 再デプロイする
+
+D1が未設定、またはAPIが失敗した場合は、ブラウザ内のlocalStorageに自動フォールバックします。
+
 ## データ構造
 
 投稿はlocalStorageに次の形式で保存されます。
