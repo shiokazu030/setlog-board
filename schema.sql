@@ -1,46 +1,12 @@
-<!doctype html>
-<html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>setlog募集ボード｜セットログ友達・ID募集掲示板</title>
-    <meta name="description" content="setlogを一緒にやる人を探せる募集掲示板です。顔出しなし、今日だけ、学生、K-POP、推し活、夜だけなどのタグでsetlog仲間を探せます。出会い目的は禁止です。" />
-    <link rel="canonical" href="https://setlog-board.pages.dev/" />
-    <meta property="og:title" content="setlog募集ボード｜セットログ友達・ID募集掲示板" />
-    <meta property="og:description" content="setlogを一緒にやる人を探せる募集掲示板です。出会い目的・個人情報投稿は禁止です。" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://setlog-board.pages.dev/" />
-    <meta property="og:site_name" content="setlog募集ボード" />
-    <meta name="twitter:card" content="summary" />
-    <link rel="stylesheet" href="/src/styles.css" />
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "WebSite",
-            "name": "setlog募集ボード",
-            "url": "https://setlog-board.pages.dev/",
-            "potentialAction": {
-              "@type": "SearchAction",
-              "target": "https://setlog-board.pages.dev/board?q={search_term_string}",
-              "query-input": "required name=search_term_string"
-            }
-          },
-          {
-            "@type": "WebApplication",
-            "name": "setlog募集ボード",
-            "applicationCategory": "SocialNetworkingApplication",
-            "operatingSystem": "Web",
-            "url": "https://setlog-board.pages.dev/",
-            "description": "setlog仲間を探すための安全重視の募集掲示板です。"
-          }
-        ]
-      }
-    </script>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/app.js"></script>
-  </body>
-</html>
+{
+  "name": "setlog-board",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
